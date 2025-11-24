@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
 import { Customer } from '../types';
 import { Users, Phone, Calendar, Star, Plus, Wallet, AlertCircle, X, Check, Save, UserPlus, Trash2 } from 'lucide-react';
 import { CURRENCY } from '../constants';
+import { ConfirmModal } from './ConfirmModal';
 
 interface CustomersProps {
   customers: Customer[];
@@ -14,6 +16,10 @@ export const Customers: React.FC<CustomersProps> = ({ customers, onRepayDebt, on
   const [repayModalOpen, setRepayModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   
+  // Delete Modal
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [repayAmount, setRepayAmount] = useState('');
 
@@ -65,16 +71,8 @@ export const Customers: React.FC<CustomersProps> = ({ customers, onRepayDebt, on
 
   const confirmDelete = (e: React.MouseEvent, customer: Customer) => {
     e.stopPropagation(); // Stop bubbling
-    
-    if (customer.debt > 0) {
-        if (window.confirm(`تنبيه هام! هذا الزبون مدين بمبلغ ${customer.debt}. هل أنت متأكد من الحذف؟ سيتم فقدان بيانات الدين.`)) {
-            onDeleteCustomer(customer.id);
-        }
-    } else {
-        if (window.confirm(`هل أنت متأكد من حذف الزبون: ${customer.name}؟`)) {
-            onDeleteCustomer(customer.id);
-        }
-    }
+    setCustomerToDelete(customer);
+    setDeleteModalOpen(true);
   };
 
   return (
@@ -282,6 +280,16 @@ export const Customers: React.FC<CustomersProps> = ({ customers, onRepayDebt, on
             </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmModal 
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={() => customerToDelete && onDeleteCustomer(customerToDelete.id)}
+        title="حذف زبون"
+        message={customerToDelete?.debt ? `تنبيه! ${customerToDelete.name} مدين بمبلغ ${customerToDelete.debt}. هل أنت متأكد من الحذف؟` : `هل تريد حذف الزبون ${customerToDelete?.name}؟`}
+        isDanger={true}
+      />
     </div>
   );
 };

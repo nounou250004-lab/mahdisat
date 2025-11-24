@@ -1,6 +1,8 @@
+
 import React, { useState } from 'react';
 import { Supplier } from '../types';
 import { Truck, Phone, Plus, Trash2, X, Save } from 'lucide-react';
+import { ConfirmModal } from './ConfirmModal';
 
 interface SuppliersProps {
   suppliers: Supplier[];
@@ -11,6 +13,10 @@ interface SuppliersProps {
 export const Suppliers: React.FC<SuppliersProps> = ({ suppliers, onAddSupplier, onDeleteSupplier }) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   
+  // Delete Modal
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null);
+
   // Form State
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
@@ -43,9 +49,8 @@ export const Suppliers: React.FC<SuppliersProps> = ({ suppliers, onAddSupplier, 
 
   const confirmDelete = (e: React.MouseEvent, supplier: Supplier) => {
     e.stopPropagation(); // Stop click from affecting parent containers
-    if (window.confirm(`هل أنت متأكد من حذف المورد: ${supplier.name}؟`)) {
-        onDeleteSupplier(supplier.id);
-    }
+    setSupplierToDelete(supplier);
+    setDeleteModalOpen(true);
   };
 
   return (
@@ -191,6 +196,16 @@ export const Suppliers: React.FC<SuppliersProps> = ({ suppliers, onAddSupplier, 
             </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmModal 
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={() => supplierToDelete && onDeleteSupplier(supplierToDelete.id)}
+        title="حذف مورد"
+        message={`هل أنت متأكد من حذف المورد: ${supplierToDelete?.name}؟`}
+        isDanger={true}
+      />
     </div>
   );
 };

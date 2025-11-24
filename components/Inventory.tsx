@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
 import { Product } from '../types';
 import { Package, Search, AlertCircle, PlusCircle, MinusCircle, Plus, X, Save, Trash2 } from 'lucide-react';
 import { CURRENCY } from '../constants';
+import { ConfirmModal } from './ConfirmModal';
 
 interface InventoryProps {
   products: Product[];
@@ -13,6 +15,10 @@ interface InventoryProps {
 export const Inventory: React.FC<InventoryProps> = ({ products, onUpdateStock, onAddProduct, onDeleteProduct }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  
+  // Delete Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   // New Product Form State
   const [newProdName, setNewProdName] = useState('');
@@ -56,9 +62,8 @@ export const Inventory: React.FC<InventoryProps> = ({ products, onUpdateStock, o
 
   const confirmDelete = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation(); // Prevent event bubbling
-    if (window.confirm(`هل أنت متأكد من حذف المنتج: ${product.name}؟`)) {
-        onDeleteProduct(product.id);
-    }
+    setProductToDelete(product);
+    setDeleteModalOpen(true);
   };
 
   return (
@@ -294,6 +299,16 @@ export const Inventory: React.FC<InventoryProps> = ({ products, onUpdateStock, o
             </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmModal 
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={() => productToDelete && onDeleteProduct(productToDelete.id)}
+        title="حذف منتج"
+        message={`هل أنت متأكد من حذف المنتج: ${productToDelete?.name}؟`}
+        isDanger={true}
+      />
     </div>
   );
 };
