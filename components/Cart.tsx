@@ -62,9 +62,14 @@ export const Cart: React.FC<CartProps> = ({ cart, customers, onAdd, onRemoveOne,
                 className="group flex items-center justify-between p-3 bg-slate-800/50 hover:bg-slate-800 rounded-xl border border-slate-700/50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <span className="text-3xl bg-slate-700 rounded-lg p-1 h-12 w-12 flex items-center justify-center">
-                    {item.icon}
-                </span>
+                <img 
+                    src={item.icon} 
+                    alt={item.name}
+                    className="w-12 h-12 rounded-lg object-cover bg-slate-700"
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80";
+                    }}
+                />
                 <div>
                   <h4 className="font-bold text-slate-200">{item.name}</h4>
                   <p className="text-emerald-400 text-sm font-mono">

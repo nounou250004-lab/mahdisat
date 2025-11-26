@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Product } from '../types';
-import { Package, Search, AlertCircle, PlusCircle, MinusCircle, Plus, X, Save, Trash2 } from 'lucide-react';
+import { Package, Search, AlertCircle, PlusCircle, MinusCircle, Plus, X, Save, Trash2, Image as ImageIcon, Upload, Filter } from 'lucide-react';
 import { CURRENCY } from '../constants';
 import { ConfirmModal } from './ConfirmModal';
 
@@ -12,8 +12,12 @@ interface InventoryProps {
   onDeleteProduct: (id: string) => void;
 }
 
+// Default Placeholder image for new products if none selected
+const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80";
+
 export const Inventory: React.FC<InventoryProps> = ({ products, onUpdateStock, onAddProduct, onDeleteProduct }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('الكل');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   
   // Delete Modal State
@@ -26,11 +30,33 @@ export const Inventory: React.FC<InventoryProps> = ({ products, onUpdateStock, o
   const [newProdCost, setNewProdCost] = useState('');
   const [newProdStock, setNewProdStock] = useState('');
   const [newProdCategory, setNewProdCategory] = useState('');
-  const [newProdIcon, setNewProdIcon] = useState('📦');
+  const [newProdIcon, setNewProdIcon] = useState(DEFAULT_IMAGE);
 
-  const filteredProducts = products.filter(p => 
-    p.name.includes(searchTerm)
-  );
+  // Extract unique categories dynamically
+  const categories = useMemo(() => {
+    const uniqueCats = Array.from(new Set(products.map(p => p.category || 'غير مصنف')));
+    return ['الكل', ...uniqueCats];
+  }, [products]);
+
+  const filteredProducts = products.filter(p => {
+    const productCategory = p.category || 'غير مصنف';
+    const matchesCategory = selectedCategory === 'الكل' || productCategory === selectedCategory;
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            if (typeof reader.result === 'string') {
+                setNewProdIcon(reader.result);
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+  };
 
   const handleSaveProduct = () => {
     if (!newProdName || !newProdPrice || !newProdCost) {
@@ -45,7 +71,7 @@ export const Inventory: React.FC<InventoryProps> = ({ products, onUpdateStock, o
         costPrice: parseFloat(newProdCost),
         stock: parseInt(newProdStock) || 0,
         category: newProdCategory || 'عام',
-        icon: newProdIcon || '📦'
+        icon: newProdIcon
     };
 
     onAddProduct(newProduct);
@@ -56,7 +82,7 @@ export const Inventory: React.FC<InventoryProps> = ({ products, onUpdateStock, o
     setNewProdCost('');
     setNewProdStock('');
     setNewProdCategory('');
-    setNewProdIcon('📦');
+    setNewProdIcon(DEFAULT_IMAGE);
     setIsAddModalOpen(false);
   };
 
@@ -75,7 +101,7 @@ export const Inventory: React.FC<InventoryProps> = ({ products, onUpdateStock, o
           </div>
           <div>
             <h2 className="text-3xl font-bold text-white">إدارة المخزن</h2>
-            <p className="text-slate-400">تتبع الكميات وتحديث المخزون</p>
+            <p className="text-slate-400">تتبع الكميات، الفئات، وتحديث المخزون</p>
           </div>
         </div>
         
@@ -101,6 +127,27 @@ export const Inventory: React.FC<InventoryProps> = ({ products, onUpdateStock, o
         </div>
       </div>
 
+      {/* Categories Filter Strip */}
+      <div className="flex items-center gap-3 overflow-x-auto pb-4 mb-2 scrollbar-hide">
+        <div className="flex items-center gap-2 text-slate-400 ml-2">
+            <Filter size={16} />
+            <span className="text-sm font-bold">تصفية حسب الفئة:</span>
+        </div>
+        {categories.map(cat => (
+            <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all border ${
+                    selectedCategory === cat
+                    ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/25'
+                    : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-white'
+                }`}
+            >
+                {cat}
+            </button>
+        ))}
+      </div>
+
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-x-auto shadow-xl">
         <table className="w-full text-right min-w-[800px]">
           <thead className="bg-slate-800/50 text-slate-400">
@@ -119,13 +166,20 @@ export const Inventory: React.FC<InventoryProps> = ({ products, onUpdateStock, o
               <tr key={product.id} className="hover:bg-slate-800/30 transition-colors">
                 <td className="p-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{product.icon}</span>
+                    <img 
+                        src={product.icon} 
+                        alt={product.name} 
+                        className="w-12 h-12 rounded-lg object-cover bg-slate-800"
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = DEFAULT_IMAGE;
+                        }}
+                    />
                     <span className="font-bold text-slate-200">{product.name}</span>
                   </div>
                 </td>
                 <td className="p-4">
-                  <span className="px-2 py-1 bg-slate-800 rounded text-sm text-slate-300">
-                    {product.category}
+                  <span className="px-2 py-1 bg-slate-800 rounded text-sm text-slate-300 border border-slate-700">
+                    {product.category || 'غير مصنف'}
                   </span>
                 </td>
                 <td className="p-4 text-emerald-400 font-mono">
@@ -180,6 +234,13 @@ export const Inventory: React.FC<InventoryProps> = ({ products, onUpdateStock, o
                 </td>
               </tr>
             ))}
+            {filteredProducts.length === 0 && (
+                <tr>
+                    <td colSpan={7} className="p-8 text-center text-slate-500">
+                        لا توجد منتجات في هذه الفئة.
+                    </td>
+                </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -245,38 +306,42 @@ export const Inventory: React.FC<InventoryProps> = ({ products, onUpdateStock, o
                     </div>
 
                     <div>
-                        <label className="block text-slate-400 text-sm mb-2">الفئة (اختياري)</label>
+                        <label className="block text-slate-400 text-sm mb-2">الفئة</label>
                         <input 
+                            list="categories-list"
                             type="text" 
                             className="w-full bg-slate-950 border border-slate-600 rounded-xl p-3 text-white focus:border-orange-500 focus:outline-none"
                             value={newProdCategory}
                             onChange={e => setNewProdCategory(e.target.value)}
-                            placeholder="مثال: وجبات"
+                            placeholder="اختر أو اكتب..."
                         />
+                        <datalist id="categories-list">
+                            {categories.filter(c => c !== 'الكل').map(c => (
+                                <option key={c} value={c} />
+                            ))}
+                        </datalist>
                     </div>
 
                      <div className="col-span-2">
-                        <label className="block text-slate-400 text-sm mb-2">الأيقونة (إيموجي)</label>
-                        <div className="flex gap-2">
-                            <input 
-                                type="text" 
-                                className="flex-1 bg-slate-950 border border-slate-600 rounded-xl p-3 text-white focus:border-orange-500 focus:outline-none text-center text-2xl"
-                                value={newProdIcon}
-                                onChange={e => setNewProdIcon(e.target.value)}
-                                placeholder="🍔"
-                                maxLength={2}
-                            />
-                            <div className="flex gap-2">
-                                {['🍔','🥤','🍕','🍟','🥩'].map(emoji => (
-                                    <button 
-                                        key={emoji}
-                                        onClick={() => setNewProdIcon(emoji)}
-                                        className="bg-slate-700 hover:bg-slate-600 w-12 rounded-xl text-2xl transition-colors"
-                                    >
-                                        {emoji}
-                                    </button>
-                                ))}
+                        <label className="block text-slate-400 text-sm mb-2">صورة المنتج</label>
+                        <div className="flex items-center gap-4">
+                            <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-slate-950 border border-slate-600 flex-shrink-0">
+                                <img 
+                                    src={newProdIcon} 
+                                    alt="Preview" 
+                                    className="w-full h-full object-cover"
+                                />
                             </div>
+                            <label className="flex-1 cursor-pointer bg-slate-700 hover:bg-slate-600 text-white py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors">
+                                <Upload size={18} />
+                                <span>رفع صورة من الجهاز</span>
+                                <input 
+                                    type="file" 
+                                    accept="image/*"
+                                    className="hidden" 
+                                    onChange={handleImageUpload}
+                                />
+                            </label>
                         </div>
                     </div>
                 </div>

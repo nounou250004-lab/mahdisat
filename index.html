@@ -27,6 +27,31 @@
       ::-webkit-scrollbar-thumb:hover {
         background: #64748b; 
       }
+
+      /* Print Styles */
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        #printable-receipt, #printable-receipt * {
+          visibility: visible;
+        }
+        #printable-receipt {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          margin: 0;
+          padding: 0;
+          background-color: white !important;
+          color: black !important;
+          box-shadow: none !important;
+          border: none !important;
+        }
+        .no-print {
+          display: none !important;
+        }
+      }
     </style>
   <script type="importmap">
 {

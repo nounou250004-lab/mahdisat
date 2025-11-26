@@ -3,7 +3,7 @@ import { Product, CartItem, Supplier, Customer, PaymentMethod, Transaction } fro
 import { PRODUCTS, SUPPLIERS, CUSTOMERS } from './constants';
 import { ProductCard } from './components/ProductCard';
 import { Cart } from './components/Cart';
-import { Modal } from './components/Modal';
+import { ReceiptModal } from './components/ReceiptModal';
 import { Navigation, ViewType } from './components/Navigation';
 import { Inventory } from './components/Inventory';
 import { Suppliers } from './components/Suppliers';
@@ -21,8 +21,10 @@ const App: React.FC = () => {
   
   // POS State
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [lastTotal, setLastTotal] = useState(0);
+  
+  // Receipt State
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
 
   // Cart Logic
   const handleAddToCart = useCallback((product: Product) => {
@@ -109,8 +111,13 @@ const App: React.FC = () => {
     };
     setTransactions(prev => [...prev, newTransaction]);
 
-    setLastTotal(total);
-    setShowSuccessModal(true);
+    // Show Receipt
+    setLastTransaction(newTransaction);
+    setShowReceipt(true);
+    
+    // Clear Cart (will be done when modal closes or immediately based on UX)
+    // Here we clear it immediately to be ready for next order, the modal holds the data in lastTransaction
+    setCart([]);
   }, [cart, products]);
 
   const handleRepayDebt = useCallback((customerId: string, amount: number) => {
@@ -130,11 +137,10 @@ const App: React.FC = () => {
         customerId
     };
     setTransactions(prev => [...prev, newTransaction]);
-  }, []);
-
-  const handleCloseModal = useCallback(() => {
-    setShowSuccessModal(false);
-    setCart([]);
+    
+    // Show Receipt for Repayment
+    setLastTransaction(newTransaction);
+    setShowReceipt(true);
   }, []);
 
   // --- Management Logic (Add/Delete/Update) ---
@@ -186,8 +192,7 @@ const App: React.FC = () => {
                             <UtensilsCrossed className="text-white" size={24} />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-black text-white tracking-wide">نظام سَلس</h1>
-                            <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Salas POS</p>
+                            <h1 className="text-3xl font-black text-white tracking-wide uppercase">Shop 2 Mahdisat</h1>
                         </div>
                     </div>
 
@@ -273,12 +278,12 @@ const App: React.FC = () => {
       <Navigation activeView={currentView} onViewChange={setCurrentView} />
       {renderContent()}
 
-      <Modal 
-        isOpen={showSuccessModal} 
-        onClose={handleCloseModal}
-        title="تمت العملية بنجاح 🎉"
-        message="تم حفظ العملية وتحديث البيانات."
-        total={lastTotal}
+      {/* Receipt Modal handles printing */}
+      <ReceiptModal 
+        isOpen={showReceipt}
+        onClose={() => setShowReceipt(false)}
+        transaction={lastTransaction}
+        customer={customers.find(c => c.id === lastTransaction?.customerId)}
       />
     </div>
   );

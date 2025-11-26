@@ -18,7 +18,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeView, onViewChange
   ];
 
   return (
-    <nav className="w-24 bg-slate-900 border-l border-slate-800 flex flex-col items-center py-6 shrink-0 z-50">
+    <nav className="w-24 bg-slate-900 border-l border-slate-800 flex flex-col items-center py-6 shrink-0 z-50 h-full">
       <div className="mb-8 p-2 bg-indigo-600 rounded-xl">
         <Store className="text-white" size={28} />
       </div>
@@ -44,6 +44,12 @@ export const Navigation: React.FC<NavigationProps> = ({ activeView, onViewChange
             </button>
           );
         })}
+      </div>
+
+      <div className="mt-auto pt-4 text-center">
+        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+            shop 2 mahdisat
+        </p>
       </div>
     </nav>
   );
